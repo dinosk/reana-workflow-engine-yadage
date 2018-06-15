@@ -23,7 +23,6 @@
 import json
 import logging
 import datetime
-import pika
 from .utils import publish_workflow_status
 
 from yadage.utils import WithJsonRefEncoder
