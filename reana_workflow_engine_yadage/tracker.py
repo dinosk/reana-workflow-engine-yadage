@@ -23,7 +23,11 @@
 import json
 import logging
 import datetime
+import jq
+
 from .utils import publish_workflow_status
+# def publish_workflow_status(*args, **kwargs):
+#     pass
 
 from yadage.utils import WithJsonRefEncoder
 
@@ -43,6 +47,17 @@ class REANATracker(object):
         log.info('sending progress information')
         serialized = json.dumps(adageobj.json(), cls=WithJsonRefEncoder,
                                 sort_keys=True)
+        purejson = json.loads(serialized)
+
+#         log.info('''
+# serialized:
+# {}
+# '''.format(json.dumps(purejson, indent=4)))
+
+        yadage_data = jq.jq('{dag: {edges: .dag.edges, nodes: [.dag.nodes[]|{metadata: {name: .task.metadata.name}, id: .id, jobid: .proxy.proxydetails.job_id}]}}').transform(
+            purejson
+        )
+
         json_message = {
             'progress': {
                 'planned': 3,
@@ -52,15 +67,7 @@ class REANATracker(object):
             },
             'structure': {
                 'type': 'yadage',
-                'graph': {
-                    'nodes': [
-                        {'nodeid': '1234', 'metadata': {'name': 'selection'}, 'jobid': None},
-                        {'nodeid': '9876', 'metadata': {'name': 'fitting'}, 'jobid': 'job-12345'}
-                    ],
-                    'egdes': [
-                        {'from': '1234', 'to': '9876'}
-                    ]
-                }
+                'data': yadage_data
             }
         }
         log_message = 'this is a tracking log at {}'.format(
