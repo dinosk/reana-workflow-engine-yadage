@@ -40,5 +40,4 @@ ARG CELERY_CONCURRENCY=2
 ENV CELERY_CONCURRENCY ${CELERY_CONCURRENCY}
 ENV PYTHONPATH=/workdir
 ENV PACKTIVITY_ASYNCBACKEND reana_workflow_engine_yadage.externalbackend:ExternalBackend:ExternalProxy
-
 CMD celery -A reana_workflow_engine_yadage.celeryapp worker -l info -Q ${QUEUE_ENV} --concurrency ${CELERY_CONCURRENCY}

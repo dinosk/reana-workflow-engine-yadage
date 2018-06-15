@@ -21,26 +21,44 @@
 # submit itself to any jurisdiction.
 
 import json
-
+import logging
+import datetime
 from yadage.utils import WithJsonRefEncoder
 
+log = logging.getLogger(__name__)
 
-class ZeroMQTracker(object):
+class REANATracker(object):
 
-    def __init__(self, socket=None, connect_string=None, identifier='yadage'):
-        self.identifier = identifier
-        self.socket = socket
+    def __init__(self, identifier = None):
+        self.workflow_id = identifier
+        log.info('initializing REANA workflow tracker for id {}'.format(self.workflow_id))
 
     def initialize(self, adageobj):
-        self.socket.send_json({'yadage_ctrl': 'clear',
-                               'identifier': self.identifier})
         self.track(adageobj)
 
     def track(self, adageobj):
+        log.info('sending progress information')
         serialized = json.dumps(adageobj.json(), cls=WithJsonRefEncoder,
                                 sort_keys=True)
-        self.socket.send_json({'yadage_obj': json.loads(serialized),
-                               'identifier': self.identifier})
+        json_message = {
+            'progress': {
+                'planned': 3,
+                'submitted': 2,
+                'succeeded': 1,
+                'failed': 0
+            }
+        }
+        log_message = 'this is a tracking log at {}'.format(
+            datetime.datetime.now().isoformat()
+        )
+
+        log.info('''sending to REANA
+uuid: {}
+json:
+{}
+message:
+{}
+'''.format(self.workflow_id, json.dumps(json_message, indent=4), log_message))
 
     def finalize(self, adageobj):
         self.track(adageobj)

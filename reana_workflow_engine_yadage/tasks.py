@@ -22,6 +22,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import logging
 import os
 
@@ -29,7 +30,6 @@ import zmq
 from yadage.steering_api import steering_ctx
 from yadage.utils import setupbackend_fromstring
 
-from . import celery_zeromq
 from .celeryapp import app
 from .config import (CODE_DIRECTORY_RELATIVE_PATH,
                      INPUTS_DIRECTORY_RELATIVE_PATH,
@@ -37,7 +37,7 @@ from .config import (CODE_DIRECTORY_RELATIVE_PATH,
                      OUTPUTS_DIRECTORY_RELATIVE_PATH, SHARED_VOLUME_PATH,
                      YADAGE_INPUTS_DIRECTORY_RELATIVE_PATH)
 from .utils import publish_workflow_status
-from .zeromq_tracker import ZeroMQTracker
+from .tracker import REANATracker
 
 log = logging.getLogger(__name__)
 
@@ -58,10 +58,7 @@ def run_yadage_workflow(workflow_uuid, workflow_workspace,
 
     workflow_workspace = '{0}/{1}'.format(SHARED_VOLUME_PATH,
                                           workflow_workspace)
-    app.conf['WORKFLOW_UUID'] = str(workflow_uuid)
-    zmqctx = celery_zeromq.get_context()
-    socket = zmqctx.socket(zmq.PUB)
-    socket.connect(os.environ['ZMQ_PROXY_CONNECT'])
+    app.conf.update(WORKFLOW_UUID=workflow_uuid)
 
     cap_backend = setupbackend_fromstring('fromenv')
 
@@ -122,7 +119,7 @@ def run_yadage_workflow(workflow_uuid, workflow_workspace,
             publish_workflow_status(workflow_uuid, 1)
 
             ys.adage_argument(additional_trackers=[
-                ZeroMQTracker(socket=socket, identifier=workflow_uuid)])
+                REANATracker(identifier=workflow_uuid)])
             log.info('added zmq tracker.. ready to go..')
             log.info('zmq publishing under: %s', workflow_uuid)
 
