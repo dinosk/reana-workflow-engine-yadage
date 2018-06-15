@@ -120,8 +120,6 @@ def run_yadage_workflow(workflow_uuid, workflow_workspace,
 
             ys.adage_argument(additional_trackers=[
                 REANATracker(identifier=workflow_uuid)])
-            log.info('added zmq tracker.. ready to go..')
-            log.info('zmq publishing under: %s', workflow_uuid)
 
         publish_workflow_status(workflow_uuid, 2)
 

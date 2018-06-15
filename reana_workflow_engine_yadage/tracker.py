@@ -23,9 +23,34 @@
 import json
 import logging
 import datetime
+import pika
+from .utils import publish_workflow_status
+
 from yadage.utils import WithJsonRefEncoder
 
 log = logging.getLogger(__name__)
+
+
+def publish_workflow_status(channel, workflow_uuid, status,
+                            logs='',
+                            message=None):
+    """Update database workflow status.
+    :param workflow_uuid: UUID which represents the workflow.
+    :param status: String that represents the analysis status.
+    :param status_message: String that represents the message related with the
+       status, if there is any.
+    """
+    log.info('Publishing Workflow: {0} Status: {1}'.
+             format(workflow_uuid, status))
+    channel.basic_publish(exchange='',
+                          routing_key='jobs-status',
+                          body=json.dumps({"workflow_uuid": workflow_uuid,
+                                           "logs": logs,
+                                           "status": status,
+                                           "message": message}),
+                          properties=pika.BasicProperties(
+                              delivery_mode=2,  # msg persistent
+                          ))
 
 class REANATracker(object):
 
@@ -46,6 +71,18 @@ class REANATracker(object):
                 'submitted': 2,
                 'succeeded': 1,
                 'failed': 0
+            },
+            'structure': {
+                'type': 'yadage',
+                'graph': {
+                    'nodes': [
+                        {'nodeid': '1234', 'metadata': {'name': 'selection'}, 'jobid': None},
+                        {'nodeid': '9876', 'metadata': {'name': 'fitting'}, 'jobid': 'job-12345'}
+                    ],
+                    'egdes': [
+                        {'from': '1234', 'to': '9876'}
+                    ]
+                }
             }
         }
         log_message = 'this is a tracking log at {}'.format(
@@ -59,6 +96,7 @@ json:
 message:
 {}
 '''.format(self.workflow_id, json.dumps(json_message, indent=4), log_message))
+        publish_workflow_status(self.workflow_id, status = 2, message = log_message)
 
     def finalize(self, adageobj):
         self.track(adageobj)
