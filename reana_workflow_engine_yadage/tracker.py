@@ -31,27 +31,6 @@ from yadage.utils import WithJsonRefEncoder
 log = logging.getLogger(__name__)
 
 
-def publish_workflow_status(channel, workflow_uuid, status,
-                            logs='',
-                            message=None):
-    """Update database workflow status.
-    :param workflow_uuid: UUID which represents the workflow.
-    :param status: String that represents the analysis status.
-    :param status_message: String that represents the message related with the
-       status, if there is any.
-    """
-    log.info('Publishing Workflow: {0} Status: {1}'.
-             format(workflow_uuid, status))
-    channel.basic_publish(exchange='',
-                          routing_key='jobs-status',
-                          body=json.dumps({"workflow_uuid": workflow_uuid,
-                                           "logs": logs,
-                                           "status": status,
-                                           "message": message}),
-                          properties=pika.BasicProperties(
-                              delivery_mode=2,  # msg persistent
-                          ))
-
 class REANATracker(object):
 
     def __init__(self, identifier = None):
