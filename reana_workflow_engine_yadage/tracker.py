@@ -81,7 +81,7 @@ json:
 message:
 {}
 '''.format(self.workflow_id, json.dumps(json_message, indent=4), log_message))
-        publish_workflow_status(self.workflow_id, status = 2, message = log_message)
+        publish_workflow_status(self.workflow_id, status = 2, message = json_message, logs = log_message)
 
     def finalize(self, adageobj):
         self.track(adageobj)

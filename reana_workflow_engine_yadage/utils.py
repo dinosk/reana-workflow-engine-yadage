@@ -27,7 +27,7 @@ import pika
 from .config import BROKER_PASS, BROKER_PORT, BROKER_URL, BROKER_USER
 
 
-def publish_workflow_status(workflow_uuid, status, message=None):
+def publish_workflow_status(workflow_uuid, status, message=None, logs = None):
     """Update database workflow status.
 
     :param workflow_uuid: UUID which represents the workflow.
