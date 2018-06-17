@@ -117,8 +117,11 @@ class ExternalBackend(object):
             image, wrapped_cmd)
 
         log.info('submitted job: %s', job_id)
-        publish_workflow_status(app.conf.get('WORKFLOW_UUID'), 1,
-                                message={"job_id": job_id.decode('utf-8')})
+        log.info('~~~~~~~~ GOT WORKFLOW_UUID: {}'.format(
+            app.conf.get('WORKFLOW_UUID')))
+        publish_workflow_status(app.conf.get('WORKFLOW_UUID').
+                                decode('utf-8'), 1,
+                                message={"job_id": job_id})
         return ExternalProxy(
             job_id=job_id,
             spec=spec,

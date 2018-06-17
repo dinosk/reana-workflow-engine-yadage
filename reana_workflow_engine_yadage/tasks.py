@@ -22,7 +22,6 @@
 
 from __future__ import absolute_import, print_function
 
-import json
 import logging
 import os
 
@@ -59,7 +58,7 @@ def run_yadage_workflow(workflow_uuid, workflow_workspace,
 
     workflow_workspace = '{0}/{1}'.format(SHARED_VOLUME_PATH,
                                           workflow_workspace)
-    app.conf.update(WORKFLOW_UUID=workflow_uuid)
+    app.conf['WORKFLOW_UUID'] = workflow_uuid
     zmqctx = celery_zeromq.get_context()
     socket = zmqctx.socket(zmq.PUB)
     socket.connect(os.environ['ZMQ_PROXY_CONNECT'])
