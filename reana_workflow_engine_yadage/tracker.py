@@ -20,16 +20,18 @@
 # granted to it by virtue of its status as an Intergovernmental Organization or
 # submit itself to any jurisdiction.
 
+import datetime
 import json
 import logging
-import datetime
+
 import jq
+from yadage.utils import WithJsonRefEncoder
 
 from .utils import publish_workflow_status
+
 # def publish_workflow_status(*args, **kwargs):
 #     pass
 
-from yadage.utils import WithJsonRefEncoder
 
 log = logging.getLogger(__name__)
 
