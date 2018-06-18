@@ -45,17 +45,20 @@ def analyze_progress(adageobj):
     nodestates = []
     for node in nx.topological_sort(dag):
         nodeobj = dag.getNode(node)
+        is_pure_publishing = nodeobj.task.metadata['wflow_hints'].get('is_purepub',False)
+        if is_pure_publishing:
+            continue
         if nodeobj.state == nodestate.RUNNING:
             nodestates.append(
-                {'state': 'running', 'job_id': nodeobj.proxy.job_id}
+                {'state': 'running', 'job_id': nodeobj.resultproxy.job_id}
             )
         elif dagstate.node_status(nodeobj):
             nodestates.append(
-                {'state': 'succeeded', 'job_id': nodeobj.proxy.job_id}
+                {'state': 'succeeded', 'job_id': nodeobj.resultproxy.job_id}
             )
         elif dagstate.node_ran_and_failed(nodeobj):
             nodestates.append(
-                {'state': 'failed', 'job_id': nodeobj.proxy.job_id}
+                {'state': 'failed', 'job_id': nodeobj.resultproxy.job_id}
             )
         elif dagstate.upstream_failure(dag,nodeobj):
             nodestates.append(
