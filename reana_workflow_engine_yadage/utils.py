@@ -27,7 +27,7 @@ import pika
 from .config import BROKER_PASS, BROKER_PORT, BROKER_URL, BROKER_USER
 
 
-def publish_workflow_status(workflow_uuid, status, message=None, logs = None):
+def publish_workflow_status(workflow_uuid, status, message=None, logs=None):
     """Update database workflow status.
 
     :param workflow_uuid: UUID which represents the workflow.
@@ -49,6 +49,7 @@ def publish_workflow_status(workflow_uuid, status, message=None, logs = None):
                           routing_key='jobs-status',
                           body=json.dumps({"workflow_uuid": workflow_uuid,
                                            "status": status,
+                                           "logs": logs,
                                            "message": message}),
                           properties=pika.BasicProperties(
                               delivery_mode=2,  # msg persistent

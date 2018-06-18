@@ -38,6 +38,7 @@ from .utils import publish_workflow_status
 
 log = logging.getLogger(__name__)
 
+
 def analyze_progress(adageobj):
     dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
     successful, failed, running, unsubmittable = 0, 0, 0, 0
@@ -45,7 +46,8 @@ def analyze_progress(adageobj):
     nodestates = []
     for node in nx.topological_sort(dag):
         nodeobj = dag.getNode(node)
-        is_pure_publishing = nodeobj.task.metadata['wflow_hints'].get('is_purepub',False)
+        is_pure_publishing = nodeobj.task.metadata['wflow_hints'].get(
+            'is_purepub', False)
         if is_pure_publishing:
             continue
         if nodeobj.state == nodestate.RUNNING:
@@ -60,7 +62,7 @@ def analyze_progress(adageobj):
             nodestates.append(
                 {'state': 'failed', 'job_id': nodeobj.resultproxy.job_id}
             )
-        elif dagstate.upstream_failure(dag,nodeobj):
+        elif dagstate.upstream_failure(dag, nodeobj):
             nodestates.append(
                 {'state': 'unsubmittable', 'job_id': None}
             )
@@ -70,11 +72,13 @@ def analyze_progress(adageobj):
             )
     return nodestates
 
+
 class REANATracker(object):
 
-    def __init__(self, identifier = None):
+    def __init__(self, identifier=None):
         self.workflow_id = identifier
-        log.info('initializing REANA workflow tracker for id {}'.format(self.workflow_id))
+        log.info('initializing REANA workflow tracker for id {}'.format(
+            self.workflow_id))
 
     def initialize(self, adageobj):
         self.track(adageobj)
@@ -93,7 +97,6 @@ class REANATracker(object):
             "succeeded": {"total": 0, "job_ids": []}
         }
 
-
         progress['engine_specific'] = jq.jq('{dag: {edges: .dag.edges, nodes: [.dag.nodes[]|{metadata: {name: .task.metadata.name}, id: .id, jobid: .proxy.proxydetails.job_id}]}}').transform(
             purejson
         )
@@ -107,7 +110,7 @@ class REANATracker(object):
                 'scheduled': 'planned',
             }[node['state']]
             progress[key]['total'] += 1
-            if key in ['submitted','succeeded','failed']:
+            if key in ['submitted', 'succeeded', 'failed']:
                 progress[key]['job_ids'].append(node['job_id'])
 
         log_message = 'this is a tracking log at {}'.format(
@@ -115,13 +118,14 @@ class REANATracker(object):
         )
 
         log.info('''sending to REANA
-uuid: {}
-json:
-{}
-message:
-{}
-'''.format(self.workflow_id, json.dumps(progress, indent=4), log_message))
-        publish_workflow_status(self.workflow_id, status = 2, message = progress, logs = log_message)
+                    uuid: {}
+                    json:
+                    {}
+                    message:
+                    {}
+                    '''.format(self.workflow_id, json.dumps(progress, indent=4), log_message))
+        publish_workflow_status(self.workflow_id, status=1, message={
+                                "progress": progress}, logs=log_message)
 
     def finalize(self, adageobj):
         self.track(adageobj)
