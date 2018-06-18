@@ -25,6 +25,9 @@ import json
 import logging
 
 import jq
+import networkx as nx
+import adage.nodestate as nodestate
+import adage.dagstate as dagstate
 from yadage.utils import WithJsonRefEncoder
 
 from .utils import publish_workflow_status
@@ -35,6 +38,34 @@ from .utils import publish_workflow_status
 
 log = logging.getLogger(__name__)
 
+def analyze_progress(adageobj):
+    dag, rules, applied = adageobj.dag, adageobj.rules, adageobj.applied_rules
+    successful, failed, running, unsubmittable = 0, 0, 0, 0
+
+    nodestates = []
+    for node in nx.topological_sort(dag):
+        nodeobj = dag.getNode(node)
+        if nodeobj.state == nodestate.RUNNING:
+            nodestates.append(
+                {'state': 'running', 'job_id': nodeobj.proxy.job_id}
+            )
+        elif dagstate.node_status(nodeobj):
+            nodestates.append(
+                {'state': 'succeeded', 'job_id': nodeobj.proxy.job_id}
+            )
+        elif dagstate.node_ran_and_failed(nodeobj):
+            nodestates.append(
+                {'state': 'failed', 'job_id': nodeobj.proxy.job_id}
+            )
+        elif dagstate.upstream_failure(dag,nodeobj):
+            nodestates.append(
+                {'state': 'unsubmittable', 'job_id': None}
+            )
+        else:
+            nodestates.append(
+                {'state': 'scheduled', 'job_id': None}
+            )
+    return nodestates
 
 class REANATracker(object):
 
@@ -51,27 +82,31 @@ class REANATracker(object):
                                 sort_keys=True)
         purejson = json.loads(serialized)
 
-#         log.info('''
-# serialized:
-# {}
-# '''.format(json.dumps(purejson, indent=4)))
+        progress = {
+            "engine_specific": None,
+            "failed": {"total": 0, "job_ids": []},
+            "planned": {"total": 0, "job_ids": []},
+            "submitted": {"total": 0, "job_ids": []},
+            "succeeded": {"total": 0, "job_ids": []}
+        }
 
-        yadage_data = jq.jq('{dag: {edges: .dag.edges, nodes: [.dag.nodes[]|{metadata: {name: .task.metadata.name}, id: .id, jobid: .proxy.proxydetails.job_id}]}}').transform(
+
+        progress['engine_specific'] = jq.jq('{dag: {edges: .dag.edges, nodes: [.dag.nodes[]|{metadata: {name: .task.metadata.name}, id: .id, jobid: .proxy.proxydetails.job_id}]}}').transform(
             purejson
         )
 
-        json_message = {
-            'progress': {
-                'planned': 3,
-                'submitted': 2,
-                'succeeded': 1,
-                'failed': 0
-            },
-            'structure': {
-                'type': 'yadage',
-                'data': yadage_data
-            }
-        }
+        for node in analyze_progress(adageobj):
+            key = {
+                'running': 'submitted',
+                'succeeded': 'succeeded',
+                'failed': 'failed',
+                'unsubmittable': 'planned',
+                'scheduled': 'planned',
+            }[node['state']]
+            progress[key]['total'] += 1
+            if key in ['submitted','succeeded','failed']:
+                progress[key]['job_ids'].append(node['job_id'])
+
         log_message = 'this is a tracking log at {}'.format(
             datetime.datetime.now().isoformat()
         )
@@ -82,8 +117,8 @@ json:
 {}
 message:
 {}
-'''.format(self.workflow_id, json.dumps(json_message, indent=4), log_message))
-        publish_workflow_status(self.workflow_id, status = 2, message = json_message, logs = log_message)
+'''.format(self.workflow_id, json.dumps(progress, indent=4), log_message))
+        publish_workflow_status(self.workflow_id, status = 2, message = progress, logs = log_message)
 
     def finalize(self, adageobj):
         self.track(adageobj)
