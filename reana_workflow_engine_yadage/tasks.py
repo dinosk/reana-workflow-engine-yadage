@@ -58,7 +58,7 @@ def run_yadage_workflow(workflow_uuid, workflow_workspace,
 
     workflow_workspace = '{0}/{1}'.format(SHARED_VOLUME_PATH,
                                           workflow_workspace)
-    app.conf['WORKFLOW_UUID'] = workflow_uuid
+    app.conf['WORKFLOW_UUID'] = str(workflow_uuid)
     zmqctx = celery_zeromq.get_context()
     socket = zmqctx.socket(zmq.PUB)
     socket.connect(os.environ['ZMQ_PROXY_CONNECT'])
