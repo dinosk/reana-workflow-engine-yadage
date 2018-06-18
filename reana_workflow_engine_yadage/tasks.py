@@ -36,8 +36,8 @@ from .config import (CODE_DIRECTORY_RELATIVE_PATH,
                      LOGS_DIRECTORY_RELATIVE_PATH,
                      OUTPUTS_DIRECTORY_RELATIVE_PATH, SHARED_VOLUME_PATH,
                      YADAGE_INPUTS_DIRECTORY_RELATIVE_PATH)
-from .utils import publish_workflow_status
 from .tracker import REANATracker
+from .utils import publish_workflow_status
 
 log = logging.getLogger(__name__)
 
