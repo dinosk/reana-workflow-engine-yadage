@@ -31,6 +31,7 @@ from packtivity.syncbackends import (build_job, contextualize_parameters,
                                      packconfig, publish)
 
 import submit
+
 from .celeryapp import app
 from .utils import publish_workflow_status
 
