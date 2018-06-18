@@ -24,10 +24,10 @@ import datetime
 import json
 import logging
 
-import jq
-import networkx as nx
 import adage.nodestate as nodestate
 import adage.dagstate as dagstate
+import jq
+import networkx as nx
 from yadage.utils import WithJsonRefEncoder
 
 from .utils import publish_workflow_status
