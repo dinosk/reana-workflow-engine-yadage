@@ -20,6 +20,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization or
 # submit itself to any jurisdiction.
 
+import ast
 import datetime
 import json
 import logging
@@ -110,8 +111,11 @@ class REANATracker(object):
                 'scheduled': 'planned',
             }[node['state']]
             progress[key]['total'] += 1
-            if key in ['submitted', 'succeeded', 'failed']:
-                progress[key]['job_ids'].append(node['job_id'])
+            if isinstance(node['job_id'], str):
+                job_id_dict = ast.literal_eval(node['job_id'])
+                job_id = job_id_dict['job_id']
+                if key in ['submitted', 'succeeded', 'failed']:
+                    progress[key]['job_ids'].append(job_id)
 
         log_message = 'this is a tracking log at {}'.format(
             datetime.datetime.now().isoformat()
